@@ -84,8 +84,6 @@ var app = builder.Build();
 using (var scope = app.Services.CreateScope())
 {
     var roleManager = scope.ServiceProvider.GetRequiredService<RoleManager<IdentityRole>>();
-
-    // ???????? ??????? ??????? ???? ???? ??????
     var roles = UserRoles.GetRoles();
 
     foreach (var roleName in roles)
@@ -116,6 +114,8 @@ app.UseHttpsRedirection();
 var locOptions = app.Services.GetRequiredService<IOptions<RequestLocalizationOptions>>();
 app.UseRequestLocalization(locOptions.Value);
 //////////////////////////
+
+app.UseStaticFiles(); 
 
 app.UseRouting();
 app.UseCors("AllowAll");

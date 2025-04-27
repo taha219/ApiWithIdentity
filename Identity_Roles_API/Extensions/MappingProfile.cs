@@ -12,9 +12,11 @@ namespace Identity_Roles_API.Extensions
             CreateMap<ProductDTO,Product>();
             CreateMap<CategoryDTO, Category>();
             CreateMap<RegsiterUserDTO,AppUser>();
+           
 
             CreateMap<Product, ProductDTO>();
             CreateMap<Category, CategoryDTO>();
+            CreateMap<AppUser, UsersWithRolesDto>();
         }
     }
 }

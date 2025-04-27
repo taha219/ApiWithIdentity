@@ -6,6 +6,6 @@ namespace Identity_Roles_API.Data.Models
     public class AppUser : IdentityUser
     {
         public string role { get; set; }
-        public byte[]? ProfilePicture { get; set; }
+        public string? ProfilePicture { get; set; }
     }
 }

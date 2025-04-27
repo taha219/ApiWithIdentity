@@ -1,4 +1,5 @@
 ﻿using System.ComponentModel.DataAnnotations;
+using Microsoft.AspNetCore.Http;
 
 namespace Identity_Roles_API.DTO
 {
@@ -12,5 +13,7 @@ namespace Identity_Roles_API.DTO
         public string Email { get; set; }
 
         public string role { get; set; }
+
+        public IFormFile? ProfilePicture { get; set; } 
     }
 }
