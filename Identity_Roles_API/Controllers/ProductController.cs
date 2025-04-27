@@ -3,6 +3,7 @@ using Identity_Roles_API.Data;
 using Identity_Roles_API.Data.Models;
 using Identity_Roles_API.DTO;
 using Identity_Roles_API.Repos;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -11,6 +12,7 @@ using NPOI.SS.Formula.Functions;
 
 namespace Identity_Roles_API.Controllers
 {
+   
     [Route("api/[controller]")]
     [ApiController]
     public class ProductController : ControllerBase
@@ -28,11 +30,11 @@ namespace Identity_Roles_API.Controllers
             _mapper = mapper;
         }
 
-        [HttpGet]
+        [HttpGet("GetAllProducts")]
+        [Authorize(Roles = UserRoles.Admin)]
         public async Task <IActionResult> GetAllProducts()
         {
-          var products = await _ibase.GetAllAsync();
-            
+          var products = await _ibase.GetAllAsync();  
             return Ok(new ApiResponse<IEnumerable<Product>>
             {
                 IsSuccess = true,
@@ -40,7 +42,9 @@ namespace Identity_Roles_API.Controllers
                 Data = products
             });
         }
+
         [HttpGet("GetById")]
+        [Authorize(Roles = UserRoles.Admin + "," + UserRoles.Manager)]
         public async Task<IActionResult> GetProductById(int id) 
             {
 
@@ -57,6 +61,7 @@ namespace Identity_Roles_API.Controllers
             return Ok(new ApiResponse<Product> { IsSuccess = true, Message = "you got product", Data = product });
             }
         [HttpGet("GetByName")]
+        [Authorize(Roles = "manager")]
         public async Task<IActionResult> GetProductByName(string name)
         {
             var product = await _ibase.FindAsync(n => n.Name == name, new[] {"category"});

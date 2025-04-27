@@ -21,6 +21,8 @@ var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
 
+builder.Services.AddEndpointsApiExplorer();
+
 builder.Services.AddControllers()
  .AddViewLocalization()
  .AddDataAnnotationsLocalization();
@@ -36,7 +38,6 @@ builder.Services.AddSwaggerGen(c =>
 
 builder.Services.AddDbContext<AppDbContext>(x => x.UseSqlServer(builder.Configuration.GetConnectionString("mycon")));
 
-builder.Services.AddEndpointsApiExplorer();
 
 builder.Services.AddSwaggerGenJwtAuth();
 builder.Services.AddCustomJwtAuth(builder.Configuration);
@@ -46,7 +47,8 @@ builder.Services.AddScoped(typeof(IBase<>),typeof(Base<>)) ;
 builder.Services.AddValidatorsFromAssemblyContaining<ProductValidator>();
 
 //inject identity 
-builder.Services.AddIdentity<AppUser, IdentityRole>()
+builder.Services.AddIdentityCore<AppUser>()
+    .AddRoles<IdentityRole>()  
     .AddEntityFrameworkStores<AppDbContext>()
     .AddDefaultTokenProviders();
 
@@ -56,6 +58,16 @@ builder.Services.AddAutoMapper(typeof(MappingProfile));
 //localization
 ///////////////////////////////////
 builder.Services.AddLocalization(options => options.ResourcesPath = "Resources"); // path=> folder  Resources
+
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("AllowAll", builder =>
+    {
+        builder.AllowAnyOrigin()
+               .AllowAnyMethod()
+               .AllowAnyHeader();
+    });
+});
 
 builder.Services.Configure<RequestLocalizationOptions>(options =>
 {
@@ -67,19 +79,28 @@ builder.Services.Configure<RequestLocalizationOptions>(options =>
 //////////////////////////////////
 var app = builder.Build();
 
-using(var scope = app.Services.CreateScope())
+//seeding roles
+//////////////////////////////////////////////
+using (var scope = app.Services.CreateScope())
 {
     var roleManager = scope.ServiceProvider.GetRequiredService<RoleManager<IdentityRole>>();
-    string[] roles = Enum.GetNames(typeof(UserRole)); // admin, manager, user
 
-    foreach (var role in roles)
+    // ???????? ??????? ??????? ???? ???? ??????
+    var roles = UserRoles.GetRoles();
+
+    foreach (var roleName in roles)
     {
-        if (!await roleManager.RoleExistsAsync(role))
+        if (!await roleManager.RoleExistsAsync(roleName))
         {
-            await roleManager.CreateAsync(new IdentityRole(role));
+            await roleManager.CreateAsync(new IdentityRole(roleName));
         }
     }
 }
+
+
+////////////////////////////////////////////
+
+
 
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
@@ -96,6 +117,8 @@ var locOptions = app.Services.GetRequiredService<IOptions<RequestLocalizationOpt
 app.UseRequestLocalization(locOptions.Value);
 //////////////////////////
 
+app.UseRouting();
+app.UseCors("AllowAll");
 app.UseAuthentication();
 app.UseAuthorization();
 

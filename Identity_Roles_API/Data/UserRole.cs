@@ -1,9 +1,14 @@
 ﻿namespace Identity_Roles_API.Data
 {
-    public enum UserRole
+    public static class UserRoles
     {
-        admin,
-        manager,
-        user
+        public const string Admin = "admin";
+        public const string User = "user";
+        public const string Manager = "manager";
+
+        public static List<string> GetRoles()
+        {
+            return new List<string> { Admin, Manager, User };
+        }
     }
 }

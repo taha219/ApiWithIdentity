@@ -3,6 +3,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
+using Newtonsoft.Json;
 using System.Text;
 
 namespace TestRESTAPI.Extentions
@@ -24,13 +25,51 @@ namespace TestRESTAPI.Extentions
                 {
                     ValidateIssuer = true,
                     ValidIssuer = configuration["JWT:Issuer"],
-                    ValidateAudience = false,
+                    ValidateAudience = true,
+                    ValidAudience = configuration["JWT:Audience"],
                     ValidateIssuerSigningKey = true,
-                    IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(configuration["JWT:SecretKey"]))
+                    IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(configuration["JWT:SecretKey"])),
+                    ValidateLifetime = true,
+                    ClockSkew = TimeSpan.FromMinutes(5)
                 };
+                o.Events = new JwtBearerEvents()
+                {
+                    OnChallenge = async context =>
+                    {
+                        context.HandleResponse();
+                        context.Response.StatusCode = StatusCodes.Status401Unauthorized;
+                        context.Response.ContentType = "application/json";
+
+                        var response = new
+                        {
+                            statusCode = StatusCodes.Status401Unauthorized,
+                            errorCode = "AUTH_001",
+                            message = "Authentication failed. Token is missing or invalid."
+                        };
+
+                        await context.Response.WriteAsync(JsonConvert.SerializeObject(response));
+                    },
+
+                    OnForbidden = async context =>
+                    {
+                        context.Response.StatusCode = StatusCodes.Status403Forbidden;
+                        context.Response.ContentType = "application/json";
+
+                        var response = new
+                        {
+                            statusCode = StatusCodes.Status403Forbidden,
+                            errorCode = "AUTH_002", 
+                            message = "Authorization failed. You do not have permission to access this resource."
+                        };
+
+                        await context.Response.WriteAsync(JsonConvert.SerializeObject(response));
+                    }
+                };
+
             });
         }
 
+        //method to make swagger accept JWT authentaction
         public static void AddSwaggerGenJwtAuth(this IServiceCollection services)
         {
             services.AddSwaggerGen(o =>
@@ -38,8 +77,8 @@ namespace TestRESTAPI.Extentions
                 o.SwaggerDoc("v1", new OpenApiInfo()
                 {
                     Version = "v1",
-                    Title = "test api",
-                    Description = "adasdsad",
+                    Title = "API With Identity And Roles",
+                    Description = "ASP.Net API",
                     Contact = new OpenApiContact()
                     {
                         Name = "Taha Omar",
